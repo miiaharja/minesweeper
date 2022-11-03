@@ -2,6 +2,9 @@
   "translation": {
     "general": {
       "save": "Save"
+    },
+    "temp": {
+      "counter-count": "Count is {{count}}"
     }
   }
 }

@@ -2,6 +2,9 @@
   "translation": {
     "general": {
       "save": "Tallenna"
+    },
+    "temp": {
+      "counter-count": "Määrä on {{count}}"
     }
   }
 }
