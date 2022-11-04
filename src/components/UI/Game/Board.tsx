@@ -1,3 +1,6 @@
+/* eslint-disable eslint-comments/disable-enable-pair */
+/* eslint-disable no-continue */
+/* eslint-disable no-param-reassign */
 import { Box } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { Cell } from "./Cell";
@@ -16,9 +19,15 @@ type Props = {
 type GameState = {
   grid: GridCell[][];
   minesCount: number;
-  gameOver: boolean;
+  gameStatus: GameStatusEnum;
   revealedCells: number;
 };
+
+enum GameStatusEnum {
+  InProgress = 0,
+  Win = 1,
+  Lost = 2,
+}
 
 type GridCell = {
   x: number;
@@ -40,7 +49,7 @@ const gameTypes: Record<DifficultyEnum, BoardState> = {
 export function Board({ difficulty }: Props) {
   const [board, setBoard] = useState<BoardState>(gameTypes[difficulty]);
   const [gameState, setGameState] = useState<GameState>({
-    gameOver: false,
+    gameStatus: GameStatusEnum.InProgress,
     grid: createNewBoard(board.height, board.width, board.mines),
     minesCount: board.mines,
     revealedCells: 0,
@@ -48,7 +57,7 @@ export function Board({ difficulty }: Props) {
 
   useEffect(() => {
     setGameState({
-      gameOver: false,
+      gameStatus: GameStatusEnum.InProgress,
       grid: createNewBoard(board.height, board.width, board.mines),
       minesCount: board.mines,
       revealedCells: 0,
@@ -59,18 +68,86 @@ export function Board({ difficulty }: Props) {
     setBoard(gameTypes[difficulty]);
   }, [difficulty]);
 
+  function checkVictory() {
+    const revealed = getRevealed();
+
+    if (revealed >= board.height * board.width - board.mines) {
+      killBoard(GameStatusEnum.Lost);
+    }
+  }
+
+  function getRevealed() {
+    return gameState.grid
+      .reduce((r, v) => {
+        r.push(...v);
+        return r;
+      }, [])
+      .map((v) => v.isRevealed)
+      .filter((v) => !!v).length;
+  }
+
+  function revealBoard() {
+    const currentGrid = gameState.grid;
+
+    for (const row of currentGrid) {
+      for (const gridCell of row) {
+        gridCell.isRevealed = true;
+      }
+    }
+
+    setGameState((prev) => prev);
+  }
+
+  function killBoard(gameStatus: GameStatusEnum) {
+    setGameState((prev) => {
+      return { ...prev, gameStatus };
+    });
+    revealBoard();
+  }
+
+  // Cell click handlers
+  function handleLeftClick(y: number, x: number) {
+    const currentGrid = gameState.grid;
+    const gridCell = currentGrid[x][y];
+    console.log(gridCell);
+
+    gridCell.isClicked = true;
+
+    if (gridCell.isRevealed || gridCell.isFlagged) {
+      return false;
+    }
+
+    // Ends game if mine
+    if (gridCell.isMine) {
+      // this.killBoard("lost");
+      return false;
+    }
+
+    if (isEmpty(gridCell)) {
+      revealEmptyNeigbhours(currentGrid, y, x);
+    }
+
+    gridCell.isFlagged = false;
+    gridCell.isRevealed = true;
+
+    checkVictory();
+
+    console.log(gridCell);
+  }
+
   return (
     <Box
       display="grid"
       gridTemplateRows={`repeat(${board.height}, 50px)`}
       gridTemplateColumns={`repeat(${board.width}, 50px)`}
+      justifyContent="center"
     >
       {gameState.grid.map((row) =>
         row.map((cell) => (
           <Cell
             key={cell.y * row.length + cell.x}
             onClickHandler={() => {
-              console.log(cell);
+              handleLeftClick(cell.y, cell.x);
             }}
             onRightClickHandler={() => {
               console.log(cell);
@@ -82,6 +159,11 @@ export function Board({ difficulty }: Props) {
       )}
     </Box>
   );
+}
+
+// Get empty cell
+function isEmpty(cell: GridCell) {
+  return cell.n === 0 && !cell.isMine;
 }
 
 function getNeighbours(grid: GridCell[][], y: number, x: number) {
@@ -104,6 +186,33 @@ function getNeighbours(grid: GridCell[][], y: number, x: number) {
   }
 
   return neighbours;
+}
+
+function revealEmptyNeigbhours(grid: GridCell[][], y: number, x: number) {
+  const neighbours = [...getNeighbours(grid, y, x)];
+  grid[y][x].isFlagged = false;
+  grid[y][x].isRevealed = true;
+
+  console.log(grid);
+
+  while (neighbours.length) {
+    const neighbourGridCell = neighbours.shift();
+
+    if (neighbourGridCell === undefined) {
+      continue;
+    }
+    if (neighbourGridCell.isRevealed) {
+      continue;
+    }
+    if (isEmpty(neighbourGridCell)) {
+      neighbours.push(
+        ...getNeighbours(grid, neighbourGridCell.y, neighbourGridCell.x),
+      );
+    }
+
+    neighbourGridCell.isFlagged = false;
+    neighbourGridCell.isRevealed = true;
+  }
 }
 
 function getRandomMines(amount: number, columns: number, rows: number) {

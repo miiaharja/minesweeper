@@ -9,7 +9,7 @@ export function Game() {
   );
 
   return (
-    <Box>
+    <Box display="grid" justifyContent="center">
       <Button onClick={() => setDifficulty(DifficultyEnum.Easy)}>Easy</Button>
       <Button onClick={() => setDifficulty(DifficultyEnum.Normal)}>
         Normal
