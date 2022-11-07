@@ -2,9 +2,12 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-param-reassign */
 import { Box } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useImmer } from "use-immer";
 import { Cell } from "./Cell";
 import { DifficultyEnum } from "./DifficultyEnum";
+import { GameOverAlert } from "./GameOverAlert";
+import { GameWonAlert } from "./GameWonAlert";
 
 export type BoardState = {
   height: number;
@@ -48,13 +51,14 @@ const gameTypes: Record<DifficultyEnum, BoardState> = {
 
 export function Board({ difficulty }: Props) {
   const [board, setBoard] = useState<BoardState>(gameTypes[difficulty]);
-  const [gameState, setGameState] = useState<GameState>({
+  const [gameState, setGameState] = useImmer<GameState>({
     gameStatus: GameStatusEnum.InProgress,
     grid: createNewBoard(board.height, board.width, board.mines),
     minesCount: board.mines,
     revealedCells: 0,
   });
 
+  // Reset state when board config changes
   useEffect(() => {
     setGameState({
       gameStatus: GameStatusEnum.InProgress,
@@ -62,102 +66,108 @@ export function Board({ difficulty }: Props) {
       minesCount: board.mines,
       revealedCells: 0,
     });
-  }, [board.height, board.mines, board.width]);
+  }, [board.height, board.mines, board.width, setGameState]);
 
   useEffect(() => {
     setBoard(gameTypes[difficulty]);
   }, [difficulty]);
 
-  function checkVictory() {
-    const revealed = getRevealed();
+  const revealBoard = useCallback(() => {
+    setGameState((draft) => {
+      const currentGrid = draft.grid;
+      for (const row of currentGrid) {
+        for (const gridCell of row) {
+          gridCell.isRevealed = true;
+        }
+      }
+    });
+  }, [setGameState]);
 
-    if (revealed >= board.height * board.width - board.mines) {
-      killBoard(GameStatusEnum.Lost);
+  const killBoard = useCallback(
+    (gameStatus: GameStatusEnum) => {
+      setGameState((draft) => {
+        draft.gameStatus = gameStatus;
+      });
+      revealBoard();
+    },
+    [revealBoard, setGameState],
+  );
+
+  // Check victory every time the game state changes
+  useEffect(() => {
+    function getRevealed() {
+      return gameState.grid
+        .reduce((r, v) => {
+          r.push(...v);
+          return r;
+        }, [])
+        .map((v) => v.isRevealed)
+        .filter((v) => !!v).length;
     }
-  }
-
-  function getRevealed() {
-    return gameState.grid
-      .reduce((r, v) => {
-        r.push(...v);
-        return r;
-      }, [])
-      .map((v) => v.isRevealed)
-      .filter((v) => !!v).length;
-  }
-
-  function revealBoard() {
-    const currentGrid = gameState.grid;
-
-    for (const row of currentGrid) {
-      for (const gridCell of row) {
-        gridCell.isRevealed = true;
+    function checkVictory() {
+      const revealed = getRevealed();
+      console.log(gameState.gameStatus);
+      if (
+        revealed >= board.height * board.width - board.mines &&
+        gameState.gameStatus !== 2
+      ) {
+        killBoard(GameStatusEnum.Win);
       }
     }
-
-    setGameState((prev) => prev);
-  }
-
-  function killBoard(gameStatus: GameStatusEnum) {
-    setGameState((prev) => {
-      return { ...prev, gameStatus };
-    });
-    revealBoard();
-  }
+    checkVictory();
+  }, [board, gameState, killBoard, setGameState]);
 
   // Cell click handlers
-  function handleLeftClick(y: number, x: number) {
-    const currentGrid = gameState.grid;
-    const gridCell = currentGrid[x][y];
-    console.log(gridCell);
+  function handleLeftClick(y: number, x: number): void {
+    setGameState((draft) => {
+      const currentGrid = draft.grid;
+      const gridCell = currentGrid[y][x];
+      gridCell.isClicked = true;
 
-    gridCell.isClicked = true;
+      if (gridCell.isRevealed || gridCell.isFlagged) {
+        return;
+      }
 
-    if (gridCell.isRevealed || gridCell.isFlagged) {
-      return false;
-    }
+      // Ends game if mine
+      if (gridCell.isMine) {
+        killBoard(GameStatusEnum.Lost);
+        return;
+      }
 
-    // Ends game if mine
-    if (gridCell.isMine) {
-      // this.killBoard("lost");
-      return false;
-    }
+      if (isEmpty(gridCell)) {
+        revealEmptyNeigbhours(currentGrid, y, x);
+      }
 
-    if (isEmpty(gridCell)) {
-      revealEmptyNeigbhours(currentGrid, y, x);
-    }
-
-    gridCell.isFlagged = false;
-    gridCell.isRevealed = true;
-
-    checkVictory();
-
-    console.log(gridCell);
+      gridCell.isFlagged = false;
+      gridCell.isRevealed = true;
+    });
   }
 
   return (
-    <Box
-      display="grid"
-      gridTemplateRows={`repeat(${board.height}, 50px)`}
-      gridTemplateColumns={`repeat(${board.width}, 50px)`}
-      justifyContent="center"
-    >
-      {gameState.grid.map((row) =>
-        row.map((cell) => (
-          <Cell
-            key={cell.y * row.length + cell.x}
-            onClickHandler={() => {
-              handleLeftClick(cell.y, cell.x);
-            }}
-            onRightClickHandler={() => {
-              console.log(cell);
-            }}
-            {...cell}
-            neighbourMines={cell.n}
-          />
-        )),
-      )}
-    </Box>
+    <>
+      <Box
+        display="grid"
+        gridTemplateRows={`repeat(${board.height}, 50px)`}
+        gridTemplateColumns={`repeat(${board.width}, 50px)`}
+        justifyContent="center"
+      >
+        {gameState.grid.map((row) =>
+          row.map((cell) => (
+            <Cell
+              key={cell.y * row.length + cell.x}
+              onClickHandler={() => {
+                handleLeftClick(cell.y, cell.x);
+              }}
+              onRightClickHandler={() => {}}
+              {...cell}
+              neighbourMines={cell.n}
+            />
+          )),
+        )}
+      </Box>
+      {gameState.gameStatus === 1 ? <GameWonAlert /> : ""}
+      {gameState.gameStatus === 2 ? <GameOverAlert /> : ""}
+    </>
   );
 }
 
@@ -192,8 +202,6 @@ function revealEmptyNeigbhours(grid: GridCell[][], y: number, x: number) {
   const neighbours = [...getNeighbours(grid, y, x)];
   grid[y][x].isFlagged = false;
   grid[y][x].isRevealed = true;
-
-  console.log(grid);
 
   while (neighbours.length) {
     const neighbourGridCell = neighbours.shift();
@@ -265,6 +273,5 @@ function createNewBoard(rows: number, columns: number, minesCount: number) {
       addGridCell(grid, gridCell);
     }
   }
-  console.log(grid);
   return grid;
 }

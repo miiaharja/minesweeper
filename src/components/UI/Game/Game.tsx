@@ -10,11 +10,14 @@ export function Game() {
 
   return (
     <Box display="grid" justifyContent="center">
-      <Button onClick={() => setDifficulty(DifficultyEnum.Easy)}>Easy</Button>
-      <Button onClick={() => setDifficulty(DifficultyEnum.Normal)}>
-        Normal
-      </Button>
-      <Button onClick={() => setDifficulty(DifficultyEnum.Hard)}>Hard</Button>
+      <Box margin="0 auto" p={5}>
+        <Button onClick={() => setDifficulty(DifficultyEnum.Easy)}>Easy</Button>
+        <Button onClick={() => setDifficulty(DifficultyEnum.Normal)}>
+          Normal
+        </Button>
+        <Button onClick={() => setDifficulty(DifficultyEnum.Hard)}>Hard</Button>
+      </Box>
+
       <Board difficulty={difficulty} />
     </Box>
   );
