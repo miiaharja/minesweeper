@@ -9,7 +9,15 @@
     "game": {
       "start-again": "Pelaa uudelleen",
       "game-over": "Peli ohi",
-      "you-won": "Sinä voitit"
+      "you-won": "Sinä voitit",
+      "height": "Korkeus",
+      "width": "Leveys",
+      "mines": "Kaivokset"
+    },
+    "difficulty": {
+      "easy": "Helppo",
+      "normal": "Normaali",
+      "custom": "Kustomoitu"
     }
   }
 }

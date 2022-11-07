@@ -11,7 +11,6 @@ import {
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
-import { DesktopNav } from "./Navigation/DesktopNav";
 import { MobileNav } from "./Navigation/MobileNav";
 
 export function Navbar() {
@@ -52,10 +51,6 @@ export function Navbar() {
           >
             Logo
           </Text>
-
-          <Flex display={{ base: "none", md: "flex" }} ml={10}>
-            <DesktopNav />
-          </Flex>
         </Flex>
 
         <Stack

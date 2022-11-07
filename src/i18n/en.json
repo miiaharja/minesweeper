@@ -9,7 +9,16 @@
     "game": {
       "start-again": "Start again",
       "game-over": "Game over",
-      "you-won": "You won"
+      "you-won": "You won",
+      "height": "Height",
+      "width": "Width",
+      "mines": "Mines"
+    },
+    "difficulty": {
+      "easy": "Easy",
+      "normal": "Normal",
+      "hard": "Hard",
+      "custom": "Custom"
     }
   }
 }

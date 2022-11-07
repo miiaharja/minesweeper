@@ -1,6 +1,12 @@
-import { Box, Button } from "@chakra-ui/react";
+import { Box, Button, useDisclosure } from "@chakra-ui/react";
 import { useState } from "react";
-import { Board } from "./Board";
+import { useTranslation } from "react-i18next";
+
+import { Board, BoardState, gameTypes } from "./Board";
+import {
+  CustomDifficultyFields,
+  CustomDifficultyModal,
+} from "./CustomDifficultyModal";
 import { DifficultyEnum } from "./DifficultyEnum";
 
 export function Game() {
@@ -8,17 +14,48 @@ export function Game() {
     DifficultyEnum.Easy,
   );
 
+  const [customSettings, setCustomSettings] = useState<BoardState>(
+    gameTypes[DifficultyEnum.Custom],
+  );
+
+  const { t } = useTranslation();
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const handleCustomDifficultySubmit = (values: CustomDifficultyFields) => {
+    onClose();
+    setDifficulty(DifficultyEnum.Custom);
+    setCustomSettings({
+      height: Number(values.height),
+      width: Number(values.width),
+      mines: Number(values.mines),
+    });
+  };
+
   return (
     <Box display="grid" justifyContent="center">
       <Box margin="0 auto" p={5}>
-        <Button onClick={() => setDifficulty(DifficultyEnum.Easy)}>Easy</Button>
-        <Button onClick={() => setDifficulty(DifficultyEnum.Normal)}>
-          Normal
+        <Button m={2} onClick={() => setDifficulty(DifficultyEnum.Easy)}>
+          {t("difficulty.easy")}
         </Button>
-        <Button onClick={() => setDifficulty(DifficultyEnum.Hard)}>Hard</Button>
+        <Button m={2} onClick={() => setDifficulty(DifficultyEnum.Normal)}>
+          {t("difficulty.normal")}
+        </Button>
+        <Button m={2} onClick={() => setDifficulty(DifficultyEnum.Hard)}>
+          {t("difficulty.hard")}
+        </Button>
+        <Button m={2} onClick={onOpen}>
+          {t("difficulty.custom")}
+        </Button>
       </Box>
 
-      <Board difficulty={difficulty} />
+      <CustomDifficultyModal
+        onSubmit={handleCustomDifficultySubmit}
+        isOpen={isOpen}
+        onClose={onClose}
+      />
+
+      <Board difficulty={difficulty} customSettings={customSettings} />
     </Box>
   );
 }

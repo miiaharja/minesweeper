@@ -17,6 +17,7 @@ export type BoardState = {
 
 type Props = {
   difficulty: DifficultyEnum;
+  customSettings: BoardState;
 };
 
 type GameState = {
@@ -43,13 +44,14 @@ type GridCell = {
   isClicked: boolean;
 };
 
-const gameTypes: Record<DifficultyEnum, BoardState> = {
+export const gameTypes: Record<DifficultyEnum, BoardState> = {
   [DifficultyEnum.Easy]: { height: 8, mines: 10, width: 8 },
   [DifficultyEnum.Normal]: { height: 12, mines: 15, width: 12 },
   [DifficultyEnum.Hard]: { height: 15, mines: 20, width: 15 },
+  [DifficultyEnum.Custom]: { height: 15, mines: 20, width: 15 },
 };
 
-export function Board({ difficulty }: Props) {
+export function Board({ difficulty, customSettings }: Props) {
   const [board, setBoard] = useState<BoardState>(gameTypes[difficulty]);
 
   const startingState: GameState = useMemo(
@@ -70,8 +72,12 @@ export function Board({ difficulty }: Props) {
   }, [setGameState, startingState]);
 
   useEffect(() => {
-    setBoard(gameTypes[difficulty]);
-  }, [difficulty]);
+    if (difficulty === DifficultyEnum.Custom) {
+      setBoard(customSettings);
+    } else {
+      setBoard(gameTypes[difficulty]);
+    }
+  }, [customSettings, difficulty]);
 
   const revealBoard = useCallback(() => {
     setGameState((draft) => {
