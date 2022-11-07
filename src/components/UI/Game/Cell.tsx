@@ -1,5 +1,4 @@
 import { Box } from "@chakra-ui/react";
-import { useEffect } from "react";
 
 type Props = {
   onClickHandler: () => void;
@@ -35,16 +34,15 @@ export function Cell({
     return neighbourMines;
   };
 
-  useEffect(() => {
-    console.log(isRevealed);
-  }, [isRevealed]);
-
   return (
     <Box
-      as="button"
+      as={isRevealed ? Box : "button"}
       bg={isRevealed ? "#372948" : "#FFCACA"}
       gridColumn={x + 1}
       gridRow={y + 1}
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
       border="1px solid white"
       onClick={onClickHandler}
       onContextMenu={onRightClickHandler}

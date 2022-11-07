@@ -5,6 +5,11 @@
     },
     "temp": {
       "counter-count": "Count is {{count}}"
+    },
+    "game": {
+      "start-again": "Start again",
+      "game-over": "Game over",
+      "you-won": "You won"
     }
   }
 }

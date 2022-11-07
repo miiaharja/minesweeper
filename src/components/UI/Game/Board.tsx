@@ -2,7 +2,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-param-reassign */
 import { Box } from "@chakra-ui/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import { Cell } from "./Cell";
 import { DifficultyEnum } from "./DifficultyEnum";
@@ -51,22 +51,23 @@ const gameTypes: Record<DifficultyEnum, BoardState> = {
 
 export function Board({ difficulty }: Props) {
   const [board, setBoard] = useState<BoardState>(gameTypes[difficulty]);
-  const [gameState, setGameState] = useImmer<GameState>({
-    gameStatus: GameStatusEnum.InProgress,
-    grid: createNewBoard(board.height, board.width, board.mines),
-    minesCount: board.mines,
-    revealedCells: 0,
-  });
 
-  // Reset state when board config changes
-  useEffect(() => {
-    setGameState({
+  const startingState: GameState = useMemo(
+    () => ({
       gameStatus: GameStatusEnum.InProgress,
       grid: createNewBoard(board.height, board.width, board.mines),
       minesCount: board.mines,
       revealedCells: 0,
-    });
-  }, [board.height, board.mines, board.width, setGameState]);
+    }),
+    [board.height, board.mines, board.width],
+  );
+
+  const [gameState, setGameState] = useImmer<GameState>(startingState);
+
+  // Reset state when board config changes
+  useEffect(() => {
+    setGameState(startingState);
+  }, [setGameState, startingState]);
 
   useEffect(() => {
     setBoard(gameTypes[difficulty]);
@@ -106,7 +107,6 @@ export function Board({ difficulty }: Props) {
     }
     function checkVictory() {
       const revealed = getRevealed();
-      console.log(gameState.gameStatus);
       if (
         revealed >= board.height * board.width - board.mines &&
         gameState.gameStatus !== 2
@@ -143,6 +143,10 @@ export function Board({ difficulty }: Props) {
     });
   }
 
+  const handleRestart = () => {
+    setGameState(startingState);
+  };
+
   return (
     <>
       <Box
@@ -165,8 +169,16 @@ export function Board({ difficulty }: Props) {
           )),
         )}
       </Box>
-      {gameState.gameStatus === 1 ? <GameWonAlert /> : ""}
-      {gameState.gameStatus === 2 ? <GameOverAlert /> : ""}
+      {gameState.gameStatus === GameStatusEnum.Win ? (
+        <GameWonAlert handleClick={handleRestart} />
+      ) : (
+        ""
+      )}
+      {gameState.gameStatus === GameStatusEnum.Lost ? (
+        <GameOverAlert handleClick={handleRestart} />
+      ) : (
+        ""
+      )}
     </>
   );
 }

@@ -5,6 +5,11 @@
     },
     "temp": {
       "counter-count": "Määrä on {{count}}"
+    },
+    "game": {
+      "start-again": "Pelaa uudelleen",
+      "game-over": "Peli ohi",
+      "you-won": "Sinä voitit"
     }
   }
 }
