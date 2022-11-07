@@ -34,19 +34,17 @@ export function Game() {
 
   return (
     <Box display="grid" justifyContent="center">
-      <Box margin="0 auto" p={5}>
-        <Button m={2} onClick={() => setDifficulty(DifficultyEnum.Easy)}>
+      <Box display="grid" gap="2" gridAutoFlow="column" margin="0 auto" p={5}>
+        <Button onClick={() => setDifficulty(DifficultyEnum.Easy)}>
           {t("difficulty.easy")}
         </Button>
-        <Button m={2} onClick={() => setDifficulty(DifficultyEnum.Normal)}>
+        <Button onClick={() => setDifficulty(DifficultyEnum.Normal)}>
           {t("difficulty.normal")}
         </Button>
-        <Button m={2} onClick={() => setDifficulty(DifficultyEnum.Hard)}>
+        <Button onClick={() => setDifficulty(DifficultyEnum.Hard)}>
           {t("difficulty.hard")}
         </Button>
-        <Button m={2} onClick={onOpen}>
-          {t("difficulty.custom")}
-        </Button>
+        <Button onClick={onOpen}>{t("difficulty.custom")}</Button>
       </Box>
 
       <CustomDifficultyModal
