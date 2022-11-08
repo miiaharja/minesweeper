@@ -46,13 +46,11 @@ export function Game() {
         </Button>
         <Button onClick={onOpen}>{t("difficulty.custom")}</Button>
       </Box>
-
       <CustomDifficultyModal
         onSubmit={handleCustomDifficultySubmit}
         isOpen={isOpen}
         onClose={onClose}
       />
-
       <Board difficulty={difficulty} customSettings={customSettings} />
     </Box>
   );
